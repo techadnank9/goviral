@@ -32,3 +32,47 @@ export type AppState =
   | { phase: "loading"; stages: ProgressEvent[] }
   | { phase: "result"; recommendation: Recommendation }
   | { phase: "error"; message: string };
+
+export interface FormatStat {
+  format: string;
+  avg_er: number;
+  count: number;
+}
+
+export interface HookStat {
+  hook_type: string;
+  avg_er: number;
+  count: number;
+}
+
+export interface HourStat {
+  hour: number;
+  avg_er: number;
+}
+
+export interface TopPost {
+  post_id: string;
+  caption: string;
+  engagement_rate: number;
+  format: string;
+  hook_type: string;
+}
+
+export interface AccountStats {
+  handle: string;
+  platform: Platform;
+  posts_analyzed: number;
+  niche: string;
+  format_breakdown: FormatStat[];
+  hook_breakdown: HookStat[];
+  hourly_engagement: HourStat[];
+  top_posts: TopPost[];
+}
+
+export type AppMode = "recommendation" | "dashboard";
+
+export type DashboardState =
+  | { phase: "input" }
+  | { phase: "loading"; stages: ProgressEvent[] }
+  | { phase: "result"; stats: AccountStats }
+  | { phase: "error"; message: string };
