@@ -7,7 +7,11 @@ from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel
 from typing import Literal, AsyncGenerator
 from models.recommendation import Recommendation, CaptionVariant
+from models.stats import AccountStats
 from streaming.sse import ProgressEvent, format_sse
+from services.stats_builder import build_stats
+from services.niche_detector import detect_niche
+from services.apify_client import fetch_instagram, fetch_tiktok
 
 router = APIRouter()
 
@@ -15,6 +19,11 @@ class AnalyzeRequest(BaseModel):
     handle: str
     platform: Literal["instagram", "tiktok"] = "instagram"
     user_topic: str | None = None
+    stream: bool = True
+
+class StatsRequest(BaseModel):
+    handle: str
+    platform: Literal["instagram", "tiktok"] = "instagram"
     stream: bool = True
 
 @router.get("/health")
@@ -64,6 +73,46 @@ async def _stream_analysis(req: AnalyzeRequest) -> AsyncGenerator[str, None]:
     async for chunk in event_generator():
         yield chunk
 
+async def _stream_stats(req: StatsRequest) -> AsyncGenerator[str, None]:
+    events: list[str] = []
+    lock = asyncio.Lock()
+
+    async def emit(event: ProgressEvent) -> None:
+        async with lock:
+            events.append(format_sse("progress", {
+                "stage": event.stage,
+                "message": event.message,
+                "pct": event.pct,
+            }))
+
+    async def run() -> AccountStats:
+        await emit(ProgressEvent(stage="fetching", message="Fetching your posts...", pct=20))
+        fetch = fetch_instagram if req.platform == "instagram" else fetch_tiktok
+        posts, profile = await fetch(req.handle)
+        await emit(ProgressEvent(stage="analyzing", message=f"Analyzing {len(posts)} posts...", pct=60))
+        niche = await detect_niche(profile, posts)
+        stats = await build_stats(posts, profile, niche)
+        return stats
+
+    async def event_generator() -> AsyncGenerator[str, None]:
+        task = asyncio.create_task(run())
+        while not task.done():
+            async with lock:
+                while events:
+                    yield events.pop(0)
+            await asyncio.sleep(0.1)
+        async with lock:
+            while events:
+                yield events.pop(0)
+        try:
+            stats: AccountStats = await task
+            yield format_sse("complete", stats.model_dump())
+        except Exception as exc:
+            yield format_sse("error", {"message": str(exc), "code": "stats_failed"})
+
+    async for chunk in event_generator():
+        yield chunk
+
 @router.post("/analyze")
 async def analyze_endpoint(req: AnalyzeRequest):
     demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
@@ -90,3 +139,13 @@ async def analyze_endpoint(req: AnalyzeRequest):
         from agents.crew import analyze
         rec = await analyze(req.handle, req.platform, req.user_topic)
         return rec
+
+@router.post("/stats")
+async def stats_endpoint(req: StatsRequest):
+    if req.stream:
+        return StreamingResponse(_stream_stats(req), media_type="text/event-stream")
+    fetch = fetch_instagram if req.platform == "instagram" else fetch_tiktok
+    posts, profile = await fetch(req.handle)
+    niche = await detect_niche(profile, posts)
+    stats = await build_stats(posts, profile, niche)
+    return stats
