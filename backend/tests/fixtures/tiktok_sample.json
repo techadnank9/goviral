@@ -1,0 +1,12 @@
+[
+  {
+    "id": "tt001", "text": "3 apps that changed how I work forever",
+    "hashtags": [{"name": "productivity"}, {"name": "ai"}],
+    "webVideoUrl": "https://tiktok.com/tt001",
+    "playCount": 500000, "diggCount": 40000, "commentCount": 800, "shareCount": 1200,
+    "videoMeta": {"duration": 22},
+    "musicMeta": {"musicName": "Trending Sound A", "musicAuthor": "Artist", "musicId": "mus001"},
+    "createTime": 1743465600,
+    "authorMeta": {"fans": 350000}
+  }
+]
