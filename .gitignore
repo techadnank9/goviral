@@ -1,1 +1,11 @@
-.worktrees/
+__pycache__/
+*.pyc
+.env
+.venv/
+venv/
+.next/
+node_modules/
+*.egg-info/
+dist/
+.vercel/
+backend/cache/demo_accounts/*.json
