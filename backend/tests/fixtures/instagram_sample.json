@@ -1,0 +1,42 @@
+[
+  {
+    "post_id": "post_001", "platform": "instagram", "url": "https://ig.com/p/1",
+    "caption": "3 AI tools that replaced my Notion, Grammarly, and ChatGPT Plus subscriptions.",
+    "hashtags": ["#ai", "#tools", "#productivity"],
+    "likes": 5000, "comments": 200, "shares": 80,
+    "post_format": "reel", "video_duration_sec": 22,
+    "posted_at": "2026-03-01T19:00:00Z", "engagement_rate": 5.28
+  },
+  {
+    "post_id": "post_002", "platform": "instagram", "url": "https://ig.com/p/2",
+    "caption": "Nobody talks about this productivity hack.",
+    "hashtags": ["#productivity"],
+    "likes": 4800, "comments": 180, "shares": 60,
+    "post_format": "reel", "video_duration_sec": 18,
+    "posted_at": "2026-03-08T07:00:00Z", "engagement_rate": 5.04
+  },
+  {
+    "post_id": "post_003", "platform": "instagram", "url": "https://ig.com/p/3",
+    "caption": "Here is my generic daily routine photo.",
+    "hashtags": [],
+    "likes": 200, "comments": 5,
+    "post_format": "image",
+    "posted_at": "2026-03-15T12:00:00Z", "engagement_rate": 0.21
+  },
+  {
+    "post_id": "post_004", "platform": "instagram", "url": "https://ig.com/p/4",
+    "caption": "POV: you just cancelled every subscription you didn't need.",
+    "hashtags": ["#pov", "#ai"],
+    "likes": 4200, "comments": 150,
+    "post_format": "reel", "video_duration_sec": 20,
+    "posted_at": "2026-03-20T20:00:00Z", "engagement_rate": 4.35
+  },
+  {
+    "post_id": "post_005", "platform": "instagram", "url": "https://ig.com/p/5",
+    "caption": "Why most founders fail at marketing in 2026.",
+    "hashtags": ["#founders", "#marketing"],
+    "likes": 3800, "comments": 120,
+    "post_format": "reel", "video_duration_sec": 21,
+    "posted_at": "2026-03-25T19:30:00Z", "engagement_rate": 3.92
+  }
+]
