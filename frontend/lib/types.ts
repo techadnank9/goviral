@@ -63,6 +63,11 @@ export interface AccountStats {
   platform: Platform;
   posts_analyzed: number;
   niche: string;
+  followers: number;
+  following: number;
+  avg_likes: number;
+  avg_comments: number;
+  avg_er: number;
   format_breakdown: FormatStat[];
   hook_breakdown: HookStat[];
   hourly_engagement: HourStat[];

@@ -69,18 +69,26 @@ def _parse_ig_profile(item: dict) -> Profile:
 
 async def fetch_instagram(handle: str) -> tuple[list[Post], Profile]:
     clean = handle.lstrip("@")
+    limit = int(os.getenv("MAX_POSTS_TO_ANALYZE", "30"))
+    print(f"[fetch_instagram] handle={clean} limit={limit}")
+
     posts_raw, profile_raw = await asyncio.gather(
         run_actor("apify/instagram-scraper", {
-            "username": [clean], "resultsType": "posts",
-            "resultsLimit": int(os.getenv("MAX_POSTS_TO_ANALYZE", "100")),
+            "directUrls": [f"https://www.instagram.com/{clean}/"],
+            "resultsType": "posts",
+            "resultsLimit": limit,
             "addParentData": False,
         }),
         run_actor("apify/instagram-profile-scraper", {"usernames": [clean]}),
     )
+
     posts = [p for item in posts_raw if (p := _parse_ig_post(item)) is not None]
+    print(f"[fetch_instagram] raw={len(posts_raw)} parsed={len(posts)}")
+
     profile = _parse_ig_profile(profile_raw[0]) if profile_raw else Profile(
         handle=clean, platform="instagram", followers=1
     )
+    print(f"[fetch_instagram] followers={profile.followers}")
     return posts, profile
 
 def _parse_tt_post(item: dict) -> Post | None:

@@ -27,6 +27,11 @@ class AccountStats(BaseModel):
     platform: Literal["instagram", "tiktok"]
     posts_analyzed: int
     niche: str
+    followers: int
+    following: int
+    avg_likes: float
+    avg_comments: float
+    avg_er: float
     format_breakdown: list[FormatStat]
     hook_breakdown: list[HookStat]
     hourly_engagement: list[HourStat]

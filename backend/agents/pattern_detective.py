@@ -1,3 +1,4 @@
+from agents.utils import extract_json
 import json
 import statistics
 from models.post import Post, Profile
@@ -76,14 +77,8 @@ async def run(posts: list[Post], profile: Profile) -> list[Pattern]:
         f"UNDERPERFORMING POSTS:\n{json.dumps(bottom_summaries, indent=2)}"
     )
 
-    raw = ask_claude(SYSTEM_PROMPT, user_msg)
-    cleaned = raw.strip()
-    if cleaned.startswith("```"):
-        cleaned = "\n".join(cleaned.split("\n")[1:])
-    if cleaned.endswith("```"):
-        cleaned = "\n".join(cleaned.split("\n")[:-1])
-
-    data = json.loads(cleaned)
+    raw = await ask_claude(SYSTEM_PROMPT, user_msg)
+    data = extract_json(raw)
     top_ids = {p.post_id for p in top_posts}
     patterns = []
     for item in data.get("patterns", []):

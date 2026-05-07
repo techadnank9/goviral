@@ -1,3 +1,4 @@
+from agents.utils import extract_json
 import json
 from datetime import datetime, timezone, timedelta
 from models.post import Post
@@ -41,14 +42,8 @@ async def run(posts: list[Post], snapshot: TrendSnapshot, patterns: list[Pattern
         f"Account's winning patterns:\n{json.dumps([p.model_dump() for p in patterns], indent=2)}"
     )
 
-    raw = ask_claude(SYSTEM_PROMPT, user_msg)
-    cleaned = raw.strip()
-    if cleaned.startswith("```"):
-        cleaned = "\n".join(cleaned.split("\n")[1:])
-    if cleaned.endswith("```"):
-        cleaned = "\n".join(cleaned.split("\n")[:-1])
-
-    data = json.loads(cleaned)
+    raw = await ask_claude(SYSTEM_PROMPT, user_msg)
+    data = extract_json(raw)
     gaps = [ContentGap(**g) for g in data.get("gaps", [])[:3]]
     while len(gaps) < 3:
         gaps.append(ContentGap(topic="General niche content", rationale="Fallback gap", opportunity_score=0.5))

@@ -1,3 +1,4 @@
+from agents.utils import extract_json
 import json
 import statistics
 from collections import Counter
@@ -120,14 +121,8 @@ async def run(
         f"Voice examples (top 5 captions):\n{json.dumps(example_captions, indent=2)}"
     )
 
-    raw = ask_claude(SYSTEM_PROMPT, user_msg)
-    cleaned = raw.strip()
-    if cleaned.startswith("```"):
-        cleaned = "\n".join(cleaned.split("\n")[1:])
-    if cleaned.endswith("```"):
-        cleaned = "\n".join(cleaned.split("\n")[:-1])
-
-    data = json.loads(cleaned)
+    raw = await ask_claude(SYSTEM_PROMPT, user_msg)
+    data = extract_json(raw)
 
     captions = sorted(
         [CaptionVariant(**c) for c in data["captions"]],

@@ -1,3 +1,4 @@
+from agents.utils import extract_json
 import json
 from models.post import Post, Profile
 from models.trend import TrendSnapshot, TrendingTopic, ContentGap
@@ -54,14 +55,8 @@ async def run(posts: list[Post], profile: Profile) -> TrendSnapshot:
         f"{trend_data_section}"
     )
 
-    raw = ask_claude(SYSTEM_PROMPT, user_msg)
-    cleaned = raw.strip()
-    if cleaned.startswith("```"):
-        cleaned = "\n".join(cleaned.split("\n")[1:])
-    if cleaned.endswith("```"):
-        cleaned = "\n".join(cleaned.split("\n")[:-1])
-
-    data = json.loads(cleaned)
+    raw = await ask_claude(SYSTEM_PROMPT, user_msg)
+    data = extract_json(raw)
     snapshot = TrendSnapshot(
         niche=niche,
         trending_topics=[TrendingTopic(**t) for t in data.get("trending_topics", [])],

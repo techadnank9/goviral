@@ -46,11 +46,20 @@ async def build_stats(posts: list[Post], profile: Profile, niche: str) -> Accoun
         for p in sorted(posts, key=lambda p: p.engagement_rate, reverse=True)[:5]
     ]
 
+    avg_likes = round(statistics.mean(p.likes for p in posts), 1) if posts else 0.0
+    avg_comments = round(statistics.mean(p.comments for p in posts), 1) if posts else 0.0
+    avg_er = round(statistics.mean(p.engagement_rate for p in posts), 3) if posts else 0.0
+
     return AccountStats(
         handle=profile.handle,
         platform=profile.platform,
         posts_analyzed=len(posts),
         niche=niche,
+        followers=profile.followers,
+        following=profile.following,
+        avg_likes=avg_likes,
+        avg_comments=avg_comments,
+        avg_er=avg_er,
         format_breakdown=format_breakdown,
         hook_breakdown=hook_breakdown,
         hourly_engagement=hourly_engagement,

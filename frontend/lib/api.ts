@@ -10,12 +10,14 @@ export async function streamAnalysis(
   onComplete: (rec: Recommendation) => void,
   onError: (msg: string) => void
 ): Promise<void> {
+  console.log("[analyze] POST", { handle, platform, userTopic });
   const resp = await fetch(`${API_BASE}/analyze`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ handle, platform, user_topic: userTopic || null, stream: true }),
   });
 
+  console.log("[analyze] response status", resp.status);
   if (!resp.ok || !resp.body) {
     onError(`Server error: ${resp.status}`);
     return;
@@ -45,11 +47,12 @@ export async function streamAnalysis(
 
       try {
         const parsed = JSON.parse(dataLine);
+        console.log("[analyze] SSE", eventType, parsed);
         if (eventType === "progress") onProgress(parsed as ProgressEvent);
         else if (eventType === "complete") onComplete(parsed as Recommendation);
         else if (eventType === "error") onError(parsed.message ?? "Unknown error");
       } catch {
-        // ignore malformed SSE frames
+        console.warn("[analyze] bad SSE frame", block);
       }
     }
   }
@@ -62,12 +65,14 @@ export async function streamStats(
   onComplete: (stats: AccountStats) => void,
   onError: (msg: string) => void
 ): Promise<void> {
+  console.log("[stats] POST", { handle, platform });
   const resp = await fetch(`${API_BASE}/stats`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ handle, platform, stream: true }),
   });
 
+  console.log("[stats] response status", resp.status);
   if (!resp.ok || !resp.body) {
     onError(`Server error: ${resp.status}`);
     return;
@@ -94,10 +99,13 @@ export async function streamStats(
       if (!dataLine) continue;
       try {
         const parsed = JSON.parse(dataLine);
+        console.log("[stats] SSE", eventType, parsed);
         if (eventType === "progress") onProgress(parsed as ProgressEvent);
         else if (eventType === "complete") onComplete(parsed as AccountStats);
         else if (eventType === "error") onError(parsed.message ?? "Unknown error");
-      } catch { }
+      } catch {
+        console.warn("[stats] bad SSE frame", block);
+      }
     }
   }
 }

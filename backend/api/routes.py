@@ -10,7 +10,6 @@ from models.recommendation import Recommendation, CaptionVariant
 from models.stats import AccountStats
 from streaming.sse import ProgressEvent, format_sse
 from services.stats_builder import build_stats
-from services.niche_detector import detect_niche
 from services.apify_client import fetch_instagram, fetch_tiktok
 
 router = APIRouter()
@@ -86,12 +85,16 @@ async def _stream_stats(req: StatsRequest) -> AsyncGenerator[str, None]:
             }))
 
     async def run() -> AccountStats:
+        print(f"[/stats] fetching {req.platform} handle={req.handle}")
         await emit(ProgressEvent(stage="fetching", message="Fetching your posts...", pct=20))
         fetch = fetch_instagram if req.platform == "instagram" else fetch_tiktok
         posts, profile = await fetch(req.handle)
+        print(f"[/stats] got {len(posts)} posts, followers={profile.followers}")
         await emit(ProgressEvent(stage="analyzing", message=f"Analyzing {len(posts)} posts...", pct=60))
-        niche = await detect_niche(profile, posts)
+        niche = _guess_niche(profile, posts)
+        print(f"[/stats] niche={niche}")
         stats = await build_stats(posts, profile, niche)
+        print(f"[/stats] done — avg_er={stats.avg_er} format_breakdown={[f.format for f in stats.format_breakdown]}")
         return stats
 
     async def event_generator() -> AsyncGenerator[str, None]:
@@ -140,12 +143,32 @@ async def analyze_endpoint(req: AnalyzeRequest):
         rec = await analyze(req.handle, req.platform, req.user_topic)
         return rec
 
+def _guess_niche(profile, posts) -> str:
+    keywords = {
+        "fitness_and_health": ["fitness", "gym", "workout", "health", "nutrition", "muscle"],
+        "food_and_cooking": ["food", "recipe", "cook", "eat", "meal", "chef"],
+        "fashion_and_beauty": ["fashion", "style", "beauty", "outfit", "makeup", "skincare"],
+        "travel": ["travel", "explore", "trip", "adventure", "destination", "wanderlust"],
+        "business_and_founders": ["business", "entrepreneur", "startup", "founder", "marketing"],
+        "ai_and_tech": ["ai", "tech", "software", "coding", "developer", "programming"],
+        "education_and_learning": ["learn", "education", "study", "knowledge", "tips", "how to"],
+        "personal_finance": ["money", "finance", "invest", "wealth", "budget", "saving"],
+        "comedy_and_entertainment": ["funny", "comedy", "humor", "laugh", "meme", "entertainment"],
+        "gaming": ["game", "gaming", "esports", "streamer", "playstation", "xbox"],
+        "parenting": ["parent", "mom", "dad", "baby", "kids", "family"],
+    }
+    text = f"{profile.bio or ''} " + " ".join(p.caption[:100] for p in posts[:20])
+    text_lower = text.lower()
+    scores = {niche: sum(1 for kw in kws if kw in text_lower) for niche, kws in keywords.items()}
+    best = max(scores, key=lambda n: scores[n])
+    return best if scores[best] > 0 else "lifestyle_and_motivation"
+
 @router.post("/stats")
 async def stats_endpoint(req: StatsRequest):
     if req.stream:
         return StreamingResponse(_stream_stats(req), media_type="text/event-stream")
     fetch = fetch_instagram if req.platform == "instagram" else fetch_tiktok
     posts, profile = await fetch(req.handle)
-    niche = await detect_niche(profile, posts)
+    niche = _guess_niche(profile, posts)
     stats = await build_stats(posts, profile, niche)
     return stats
